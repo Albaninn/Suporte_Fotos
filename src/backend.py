@@ -3,7 +3,7 @@ import shutil
 import cv2
 import piexif
 from datetime import datetime
-from PIL import Image, ImageEnhance
+from PIL import Image, ImageEnhance, ImageOps # <--- Adicionado ImageOps
 
 class PhotoManager:
     def __init__(self):
@@ -40,25 +40,34 @@ class PhotoManager:
             return False, 0
 
     def _aplicar_processamento_visual(self, img_pil, config):
+        # --- CORREÇÃO CRÍTICA DE ROTAÇÃO ---
+        # Aplica a rotação do EXIF fisicamente na imagem antes de editar.
+        # Isso garante que fotos verticais fiquem realmente verticais na memória.
+        img_pil = ImageOps.exif_transpose(img_pil) 
+        # -----------------------------------
+
         # 1. Redimensionamento
         if config.get('resize_ativo') and config.get('resize_largura'):
             largura_max = int(config['resize_largura'])
             w, h = img_pil.size
             
-            # Lógica inteligente de resize para não distorcer
             if w > largura_max or h > largura_max:
                 if w > h: # Paisagem
                     ratio = largura_max / float(w)
                     nova_h = int(h * ratio)
                     novo_w = largura_max
                 else: # Retrato
-                    # Se for retrato, a altura será maior que a largura_max, 
-                    # mas queremos limitar pelo maior lado ou pela largura?
-                    # Geralmente "Resize" é "Fit within box".
-                    # Vamos manter a proporção correta:
-                    ratio = largura_max / float(h)
-                    novo_w = int(w * ratio)
-                    nova_h = largura_max
+                    # Mantém a proporção correta baseada na largura ou altura?
+                    # Para "fit", limitamos o maior lado.
+                    # Mas se quiser largura fixa, usa a lógica abaixo.
+                    # Vamos limitar pelo MAIOR lado para garantir consistência.
+                    if h > largura_max:
+                        ratio = largura_max / float(h)
+                        novo_w = int(w * ratio)
+                        nova_h = largura_max
+                    else:
+                        novo_w = w
+                        nova_h = h
                     
                 img_pil = img_pil.resize((novo_w, nova_h), Image.Resampling.LANCZOS)
 
@@ -69,15 +78,10 @@ class PhotoManager:
                 logo = Image.open(path_logo).convert("RGBA")
                 w_img, h_img = img_pil.size
 
-                # --- LÓGICA CORRIGIDA (BASEADA NA LARGURA) ---
-                # O logo sempre ocupará X% da LARGURA da foto, não importa a orientação.
-                # Isso garante que ele nunca fique "gordo" demais em fotos verticais.
-                
-                porcentagem_largura = 0.20  # 20% da largura da foto. (Ajuste se quiser maior/menor)
-                
+                # Lógica: Logo ocupa 20% da LARGURA da foto (seja retrato ou paisagem)
+                porcentagem_largura = 0.20 
                 w_logo_novo = int(w_img * porcentagem_largura)
                 
-                # Calcula altura proporcional do logo
                 ratio_logo = logo.size[1] / logo.size[0]
                 h_logo_novo = int(w_logo_novo * ratio_logo)
                 
@@ -90,10 +94,9 @@ class PhotoManager:
                     a = a.point(lambda p: p * opacity_level)
                     logo = Image.merge('RGBA', (r, g, b, a))
 
-                # Margem: 3% do lado menor (para não colar na borda)
+                # Margem: 3% do menor lado
                 margem = int(min(w_img, h_img) * 0.03)
                 
-                # Posição: Canto Inferior Direito
                 posicao_x = w_img - w_logo_novo - margem
                 posicao_y = h_img - h_logo_novo - margem
                 
@@ -149,24 +152,27 @@ class PhotoManager:
             novo_nome = f"{prefixo}_{contador}{extensao}"
             caminho_final = os.path.join(pasta_destino, novo_nome)
 
-            # Detectar Borrão
             if config.get('blur_ativo'):
                 e_borrada, score = self._detectar_borrao(caminho_origem, config.get('blur_limiar', 100))
                 if e_borrada:
                     relatorio_borradas.append((novo_nome, int(score)))
 
-            # Processamento Visual
             processamento_pesado = config.get('resize_ativo') or config.get('watermark_ativo')
             
             try:
                 if processamento_pesado and extensao in ['.jpg', '.jpeg', '.png']:
                     with Image.open(caminho_origem) as img:
+                        # O processamento agora lida com a rotação internamente
                         img_processada = self._aplicar_processamento_visual(img, config)
-                        img_processada.save(caminho_final, quality=95, exif=img.info.get('exif'))
+                        
+                        # Salvamos SEM o EXIF antigo de orientação, pois já aplicamos a rotação nos pixels
+                        # Mas podemos querer manter outros metadados.
+                        # O ideal é salvar limpo ou copiar EXIF seletivamente, 
+                        # mas para web/entrega, salvar limpo evita muita dor de cabeça.
+                        img_processada.save(caminho_final, quality=95)
                 else:
                     shutil.copy2(caminho_origem, caminho_final)
                 
-                # Metadados
                 if config.get('copyright_ativo') and extensao in ['.jpg', '.jpeg']:
                     self._injetar_metadados(caminho_final, config.get('copyright_artista', ''), config.get('copyright_texto', ''))
 
