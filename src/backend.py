@@ -40,61 +40,63 @@ class PhotoManager:
             return False, 0
 
     def _aplicar_processamento_visual(self, img_pil, config):
-        # 1. Redimensionamento (Opcional)
+        # 1. Redimensionamento
         if config.get('resize_ativo') and config.get('resize_largura'):
             largura_max = int(config['resize_largura'])
             w, h = img_pil.size
             
-            # Só reduz se a imagem for maior que o limite
+            # Lógica inteligente de resize para não distorcer
             if w > largura_max or h > largura_max:
-                # Usa o maior lado como referência para não distorcer
-                if w > h:
+                if w > h: # Paisagem
                     ratio = largura_max / float(w)
                     nova_h = int(h * ratio)
                     novo_w = largura_max
-                else:
+                else: # Retrato
+                    # Se for retrato, a altura será maior que a largura_max, 
+                    # mas queremos limitar pelo maior lado ou pela largura?
+                    # Geralmente "Resize" é "Fit within box".
+                    # Vamos manter a proporção correta:
                     ratio = largura_max / float(h)
                     novo_w = int(w * ratio)
                     nova_h = largura_max
                     
                 img_pil = img_pil.resize((novo_w, nova_h), Image.Resampling.LANCZOS)
 
-        # 2. Marca D'água Inteligente
+        # 2. Marca D'água
         if config.get('watermark_ativo') and config.get('watermark_path'):
             path_logo = config['watermark_path']
             if os.path.exists(path_logo):
                 logo = Image.open(path_logo).convert("RGBA")
                 w_img, h_img = img_pil.size
 
-                # --- LÓGICA DE PROPORÇÃO CORRIGIDA ---
-                # Define o tamanho do logo baseado no MAIOR lado da foto (Longest Edge)
-                # Isso garante consistência entre Retrato e Paisagem.
-                maior_lado = max(w_img, h_img)
-                fator_escala = 0.18  # Logo ocupará 18% do maior lado (ajuste conforme gosto)
+                # --- LÓGICA CORRIGIDA (BASEADA NA LARGURA) ---
+                # O logo sempre ocupará X% da LARGURA da foto, não importa a orientação.
+                # Isso garante que ele nunca fique "gordo" demais em fotos verticais.
                 
-                # Calcula largura alvo do logo mantendo aspect ratio do logo
-                ratio_logo = logo.size[0] / logo.size[1]
-                w_logo_novo = int(maior_lado * fator_escala)
-                h_logo_novo = int(w_logo_novo / ratio_logo)
+                porcentagem_largura = 0.20  # 20% da largura da foto. (Ajuste se quiser maior/menor)
+                
+                w_logo_novo = int(w_img * porcentagem_largura)
+                
+                # Calcula altura proporcional do logo
+                ratio_logo = logo.size[1] / logo.size[0]
+                h_logo_novo = int(w_logo_novo * ratio_logo)
                 
                 logo = logo.resize((w_logo_novo, h_logo_novo), Image.Resampling.LANCZOS)
                 
-                # Aplica Opacidade
+                # Opacidade
                 opacity_level = config.get('watermark_opacity', 100) / 100.0
                 if opacity_level < 1.0:
                     r, g, b, a = logo.split()
                     a = a.point(lambda p: p * opacity_level)
                     logo = Image.merge('RGBA', (r, g, b, a))
 
-                # Define margem baseada no MENOR lado (para não ficar colado em fotos estreitas)
-                menor_lado = min(w_img, h_img)
-                margem = int(menor_lado * 0.03) # 3% do lado menor
+                # Margem: 3% do lado menor (para não colar na borda)
+                margem = int(min(w_img, h_img) * 0.03)
                 
                 # Posição: Canto Inferior Direito
                 posicao_x = w_img - w_logo_novo - margem
                 posicao_y = h_img - h_logo_novo - margem
                 
-                # Cria camada transparente e cola
                 layer_transparente = Image.new('RGBA', img_pil.size, (0,0,0,0))
                 layer_transparente.paste(logo, (posicao_x, posicao_y))
                 
