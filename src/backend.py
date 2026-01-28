@@ -40,45 +40,62 @@ class PhotoManager:
             return False, 0
 
     def _aplicar_processamento_visual(self, img_pil, config):
-        # 1. Redimensionamento
+        # 1. Redimensionamento (Opcional)
         if config.get('resize_ativo') and config.get('resize_largura'):
             largura_max = int(config['resize_largura'])
             w, h = img_pil.size
-            if w > largura_max:
-                ratio = largura_max / float(w)
-                nova_altura = int(h * ratio)
-                img_pil = img_pil.resize((largura_max, nova_altura), Image.Resampling.LANCZOS)
+            
+            # Só reduz se a imagem for maior que o limite
+            if w > largura_max or h > largura_max:
+                # Usa o maior lado como referência para não distorcer
+                if w > h:
+                    ratio = largura_max / float(w)
+                    nova_h = int(h * ratio)
+                    novo_w = largura_max
+                else:
+                    ratio = largura_max / float(h)
+                    novo_w = int(w * ratio)
+                    nova_h = largura_max
+                    
+                img_pil = img_pil.resize((novo_w, nova_h), Image.Resampling.LANCZOS)
 
-        # 2. Marca D'água com Opacidade
+        # 2. Marca D'água Inteligente
         if config.get('watermark_ativo') and config.get('watermark_path'):
             path_logo = config['watermark_path']
             if os.path.exists(path_logo):
                 logo = Image.open(path_logo).convert("RGBA")
-                
-                # Redimensiona logo
                 w_img, h_img = img_pil.size
-                fator_escala = 0.15 
-                w_logo_novo = int(w_img * fator_escala)
-                ratio_logo = w_logo_novo / float(logo.size[0])
-                h_logo_novo = int(logo.size[1] * ratio_logo)
+
+                # --- LÓGICA DE PROPORÇÃO CORRIGIDA ---
+                # Define o tamanho do logo baseado no MAIOR lado da foto (Longest Edge)
+                # Isso garante consistência entre Retrato e Paisagem.
+                maior_lado = max(w_img, h_img)
+                fator_escala = 0.18  # Logo ocupará 18% do maior lado (ajuste conforme gosto)
+                
+                # Calcula largura alvo do logo mantendo aspect ratio do logo
+                ratio_logo = logo.size[0] / logo.size[1]
+                w_logo_novo = int(maior_lado * fator_escala)
+                h_logo_novo = int(w_logo_novo / ratio_logo)
+                
                 logo = logo.resize((w_logo_novo, h_logo_novo), Image.Resampling.LANCZOS)
                 
-                # --- NOVO: Aplica Opacidade ---
+                # Aplica Opacidade
                 opacity_level = config.get('watermark_opacity', 100) / 100.0
                 if opacity_level < 1.0:
-                    # Separa os canais (Vermelho, Verde, Azul, Alpha)
                     r, g, b, a = logo.split()
-                    # Multiplica o canal Alpha pela opacidade desejada
                     a = a.point(lambda p: p * opacity_level)
-                    # Remonta o logo com a nova transparência
                     logo = Image.merge('RGBA', (r, g, b, a))
-                # ------------------------------
 
-                layer_transparente = Image.new('RGBA', img_pil.size, (0,0,0,0))
-                margem = int(w_img * 0.02)
+                # Define margem baseada no MENOR lado (para não ficar colado em fotos estreitas)
+                menor_lado = min(w_img, h_img)
+                margem = int(menor_lado * 0.03) # 3% do lado menor
+                
+                # Posição: Canto Inferior Direito
                 posicao_x = w_img - w_logo_novo - margem
                 posicao_y = h_img - h_logo_novo - margem
                 
+                # Cria camada transparente e cola
+                layer_transparente = Image.new('RGBA', img_pil.size, (0,0,0,0))
                 layer_transparente.paste(logo, (posicao_x, posicao_y))
                 
                 img_pil = img_pil.convert("RGBA")
