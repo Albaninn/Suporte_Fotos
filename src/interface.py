@@ -1,9 +1,20 @@
 import customtkinter as ctk
 from tkinter import filedialog, messagebox
 import threading
+import sys
 import os
 import json
 from backend import PhotoManager
+
+def resource_path(relative_path):
+    """ Obtém o caminho absoluto para recursos, funciona para dev e para o PyInstaller """
+    try:
+        # PyInstaller cria uma pasta temporária e armazena o caminho em _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
 
 CONFIG_FILE = "user_config.json"
 
@@ -13,6 +24,10 @@ class PhotoApp(ctk.CTk):
 
         self.title("PhotoFlow Pro")
         self.geometry("900x700")
+        try:
+            self.iconbitmap(resource_path("IconPhotoAPP.ico"))
+        except:
+            pass # Se não achar o ícone, abre sem ele (evita crash)
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("blue")
 
