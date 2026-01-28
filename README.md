@@ -37,7 +37,7 @@ Certifique-se de ter o [Python 3.10+](https://www.python.org/) instalado.
 
 1. Clone o repositório:
    ```bash
-   git clone [https://github.com/SEU-USUARIO/photoflow-organizer.git](https://github.com/SEU-USUARIO/photoflow-organizer.git)
+   git clone https://github.com/Albaninn/Suporte_Fotos.git
    ```
 
 2. Crie um ambiente virtual (recomendado):
@@ -74,4 +74,4 @@ PhotoFlow_Organizer/
 Sugestões e pull requests são bem-vindos. Este projeto foi desenvolvido para resolver dores reais no fluxo de fotografia esportiva e social.
 
 ---
-Desenvolvido por [Seu Nome]
+Desenvolvido por Luckas Serenato

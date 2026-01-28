@@ -3,6 +3,8 @@ customtkinter>=5.2.0
 
 # Manipulação de Imagens e Leitura de EXIF (Metadados)
 Pillow>=10.0.0
+opencv-python
+piexif
 
 # Ferramentas para criar o executável (.exe)
 pyinstaller>=6.0.0
