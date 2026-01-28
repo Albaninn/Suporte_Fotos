@@ -12,7 +12,7 @@ class PhotoApp(ctk.CTk):
         super().__init__()
 
         self.title("PhotoFlow Pro")
-        self.geometry("900x680") # Aumentei um pouco altura
+        self.geometry("900x700")
         ctk.set_appearance_mode("Dark")
         ctk.set_default_color_theme("blue")
 
@@ -28,6 +28,8 @@ class PhotoApp(ctk.CTk):
         self._criar_painel_esquerdo()
         self._criar_painel_direito()
         self._criar_painel_inferior()
+        
+        # Carrega configs E atualiza a visibilidade dos painéis
         self._carregar_configuracoes()
 
     def _criar_painel_esquerdo(self):
@@ -67,18 +69,23 @@ class PhotoApp(ctk.CTk):
         self.entry_prefixo.pack(pady=5, fill="x", padx=20)
 
         # --- ABA TRATAMENTO ---
-        # Marca D'água
-        ctk.CTkLabel(self.tab_tratamento, text="--- Marca D'água ---", font=("Arial", 12, "bold")).pack(pady=5)
-        self.switch_watermark = ctk.CTkSwitch(self.tab_tratamento, text="Aplicar Logo", command=self._toggle_watermark_options)
+        
+        # :: SEÇÃO MARCA D'ÁGUA (Container fixo) ::
+        self.container_watermark = ctk.CTkFrame(self.tab_tratamento, fg_color="transparent")
+        self.container_watermark.pack(fill="x", pady=5, padx=5)
+
+        ctk.CTkLabel(self.container_watermark, text="--- Marca D'água ---", font=("Arial", 12, "bold")).pack(pady=5)
+        self.switch_watermark = ctk.CTkSwitch(self.container_watermark, text="Aplicar Logo", command=self._toggle_watermark_options)
         self.switch_watermark.pack(pady=5)
 
-        self.frame_watermark_opts = ctk.CTkFrame(self.tab_tratamento, fg_color="transparent")
+        # Opções escondidas (Dentro do container da marca d'água)
+        self.frame_watermark_opts = ctk.CTkFrame(self.container_watermark, fg_color="transparent")
+        
         self.btn_logo = ctk.CTkButton(self.frame_watermark_opts, text="Escolher PNG", fg_color="#444", command=self.selecionar_logo)
         self.btn_logo.pack(pady=2)
         self.lbl_logo_path = ctk.CTkLabel(self.frame_watermark_opts, text="...", font=("Arial", 10))
         self.lbl_logo_path.pack(pady=2)
         
-        # Slider Opacidade (NOVO)
         self.lbl_opacity = ctk.CTkLabel(self.frame_watermark_opts, text="Opacidade: 100%")
         self.lbl_opacity.pack(pady=(5,0))
         self.slider_opacity = ctk.CTkSlider(self.frame_watermark_opts, from_=10, to=100, command=self._atualizar_label_opacity)
@@ -90,20 +97,27 @@ class PhotoApp(ctk.CTk):
         self.entry_resize = ctk.CTkEntry(self.frame_watermark_opts, placeholder_text="Largura Max (px)")
         self.entry_resize.pack(pady=2)
 
-        ctk.CTkLabel(self.tab_tratamento, text=" ").pack() 
+        # Espaçador Visual
+        ctk.CTkLabel(self.tab_tratamento, text=" ").pack()
 
-        # Blur
-        ctk.CTkLabel(self.tab_tratamento, text="--- Análise de Nitidez ---", font=("Arial", 12, "bold")).pack(pady=5)
-        self.switch_blur = ctk.CTkSwitch(self.tab_tratamento, text="Detectar Borrão")
+        # :: SEÇÃO BLUR (Container fixo) ::
+        self.container_blur = ctk.CTkFrame(self.tab_tratamento, fg_color="transparent")
+        self.container_blur.pack(fill="x", pady=5, padx=5)
+
+        ctk.CTkLabel(self.container_blur, text="--- Análise de Nitidez ---", font=("Arial", 12, "bold")).pack(pady=5)
+        self.switch_blur = ctk.CTkSwitch(self.container_blur, text="Detectar Borrão", command=self._toggle_blur_options)
         self.switch_blur.pack(pady=5)
         
-        # Label Dinâmica para o Valor (NOVO)
-        self.lbl_blur_valor = ctk.CTkLabel(self.tab_tratamento, text="Sensibilidade: 100")
+        # Opções escondidas (Dentro do container de blur)
+        self.frame_blur_opts = ctk.CTkFrame(self.container_blur, fg_color="transparent")
+        
+        self.lbl_blur_valor = ctk.CTkLabel(self.frame_blur_opts, text="Sensibilidade: 100")
         self.lbl_blur_valor.pack(pady=2)
         
-        self.slider_blur = ctk.CTkSlider(self.tab_tratamento, from_=10, to=500, command=self._atualizar_label_blur)
+        self.slider_blur = ctk.CTkSlider(self.frame_blur_opts, from_=10, to=500, command=self._atualizar_label_blur)
         self.slider_blur.set(100)
         self.slider_blur.pack(pady=5)
+
 
         # --- ABA METADADOS ---
         self.switch_copyright = ctk.CTkSwitch(self.tab_meta, text="Gravar Copyright")
@@ -128,17 +142,26 @@ class PhotoApp(ctk.CTk):
         self.btn_processar.pack(pady=10, fill="x", padx=50)
 
     # --- EVENTOS DE INTERFACE ---
-    def _atualizar_label_blur(self, value):
-        self.lbl_blur_valor.configure(text=f"Sensibilidade: {int(value)}")
-        
-    def _atualizar_label_opacity(self, value):
-        self.lbl_opacity.configure(text=f"Opacidade: {int(value)}%")
-
+    
+    # 1. Função que mostra/esconde opções de Watermark
     def _toggle_watermark_options(self):
         if self.switch_watermark.get() == 1:
             self.frame_watermark_opts.pack(pady=5, padx=10, fill="x")
         else:
             self.frame_watermark_opts.pack_forget()
+
+    # 2. Função que mostra/esconde opções de Blur
+    def _toggle_blur_options(self):
+        if self.switch_blur.get() == 1:
+            self.frame_blur_opts.pack(pady=5, padx=10, fill="x")
+        else:
+            self.frame_blur_opts.pack_forget()
+
+    def _atualizar_label_blur(self, value):
+        self.lbl_blur_valor.configure(text=f"Sensibilidade: {int(value)}")
+        
+    def _atualizar_label_opacity(self, value):
+        self.lbl_opacity.configure(text=f"Opacidade: {int(value)}%")
 
     def selecionar_logo(self):
         path = filedialog.askopenfilename(filetypes=[("Imagens PNG", "*.png")])
@@ -183,8 +206,11 @@ class PhotoApp(ctk.CTk):
             "artista": self.entry_artista.get(),
             "copyright_text": self.entry_copyright.get(),
             "blur_sensibilidade": self.slider_blur.get(),
-            "watermark_opacity": self.slider_opacity.get(), # Salva opacidade
-            "resize_width": self.entry_resize.get()
+            "watermark_opacity": self.slider_opacity.get(),
+            "resize_width": self.entry_resize.get(),
+            # Salva também se as opções estavam ativas
+            "blur_active": self.switch_blur.get(),
+            "watermark_active": self.switch_watermark.get()
         }
         try:
             with open(CONFIG_FILE, "w") as f: json.dump(dados, f)
@@ -207,6 +233,16 @@ class PhotoApp(ctk.CTk):
                     self.lbl_opacity.configure(text=f"Opacidade: {int(opac_val)}%")
                     
                     self.entry_resize.insert(0, dados.get("resize_width", "2048"))
+
+                    # Restaura e ATUALIZA VISUALMENTE os switches
+                    if dados.get("watermark_active"):
+                        self.switch_watermark.select()
+                        self._toggle_watermark_options() # Força mostrar
+                    
+                    if dados.get("blur_active"):
+                        self.switch_blur.select()
+                        self._toggle_blur_options() # Força mostrar
+
             except: pass
 
     def atualizar_progresso(self, texto, porcentagem):
@@ -222,7 +258,7 @@ class PhotoApp(ctk.CTk):
         config = {
             "watermark_ativo": bool(self.switch_watermark.get()),
             "watermark_path": self.logo_path,
-            "watermark_opacity": self.slider_opacity.get(), # Manda para backend
+            "watermark_opacity": self.slider_opacity.get(), 
             "resize_ativo": bool(self.chk_resize.get()),
             "resize_largura": self.entry_resize.get(),
             "blur_ativo": bool(self.switch_blur.get()),
