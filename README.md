@@ -1,71 +1,86 @@
-# 📸 PhotoFlow Organizer
+# 📸 PhotoFlow Pro
 
-> **Automação de fluxo de trabalho para fotógrafos de eventos.**
-> Organização inteligente baseada em metadados EXIF, unificação de múltiplas fontes e renomeação sequencial.
+> **Suíte de ingestão, organização e tratamento em lote para fotógrafos.**
+> Unifica múltiplas câmeras, detecta fotos borradas via Visão Computacional e aplica branding inteligente.
 
-![Badge Concluído](http://img.shields.io/static/v1?label=STATUS&message=EM%20DESENVOLVIMENTO&color=GREEN&style=for-the-badge)
-![Badge Python](http://img.shields.io/static/v1?label=PYTHON&message=3.10+&color=blue&style=for-the-badge)
+![Badge Python](https://img.shields.io/static/v1?label=PYTHON&message=3.10+&color=blue&style=for-the-badge)
+![Badge CV](https://img.shields.io/static/v1?label=OPENCV&message=VISÃO%20COMPUTACIONAL&color=green&style=for-the-badge)
+![Badge Status](https://img.shields.io/static/v1?label=STATUS&message=V1.0%20STABLE&color=success&style=for-the-badge)
 
 ## 📌 O Problema
-Fotógrafos que cobrem eventos dinâmicos (como campeonatos de Judô ou casamentos) frequentemente utilizam **múltiplos corpos de câmera** (ex: uma Nikon com teleobjetiva e uma Canon com grande angular).
-
-Ao descarregar os cartões, a ordenação alfabética padrão do sistema operacional (`DSC_001.jpg`, `IMG_001.jpg`) quebra a cronologia do evento, misturando momentos distintos e dificultando a edição e a narrativa visual.
+No fluxo profissional de fotografia (eventos esportivos, casamentos), três dores são constantes:
+1.  **Dessincronia:** Fotos de múltiplas câmeras (Nikon, Canon) ficam fora de ordem ao serem renomeadas.
+2.  **Triagem Lenta:** Encontrar fotos tremidas/borradas em um lote de 2.000 imagens leva horas.
+3.  **Exportação Manual:** Abrir o Lightroom apenas para colocar uma marca d'água simples e redimensionar para o cliente.
 
 ## 🚀 A Solução
-O **PhotoFlow Organizer** é uma aplicação Desktop que ingere arquivos de múltiplas fontes, lê os metadados brutos (EXIF) para capturar o *timestamp* exato do clique e reorganiza todo o set de imagens em uma linha do tempo única e coerente.
+O **PhotoFlow Pro** é uma aplicação Desktop que automatiza a ingestão. Ele lê os metadados brutos (EXIF) para ordenação cronológica perfeita, usa algoritmos matemáticos para detectar nitidez e aplica branding (logo) respeitando a orientação da foto.
 
-### Funcionalidades Principais
-* **Ingestão Multi-Origem:** Suporte para importação simultânea de múltiplos cartões de memória/pastas.
-* **Smart Sorting (Ordenação Inteligente):** Utiliza a tag EXIF `DateTimeOriginal` para ordenar fotos independente do nome do arquivo ou da marca da câmera.
-* **Renomeação em Lote:** Padroniza os arquivos (ex: `Evento_Judo_0001.jpg`) mantendo a ordem cronológica real.
-* **Preservação de Dados:** Utiliza cópia segura (`shutil`) para manter metadados originais intactos.
-* **Interface Moderna:** GUI desenvolvida com `CustomTkinter` com suporte a Dark Mode.
+### Funcionalidades Chave
 
-## 🛠️ Tecnologias Utilizadas
-* **Linguagem:** Python 3
-* **GUI:** CustomTkinter (Wrapper moderno para Tcl/Tk)
-* **Manipulação de Imagem:** Pillow (PIL)
-* **Sistema de Arquivos:** OS, Shutil, Pathlib
-* **Build:** PyInstaller / Auto-Py-To-Exe
+#### 1. 🧠 Organização Inteligente (Backend Recursivo)
+* **Varredura Profunda:** Detecta fotos em subpastas de cartões de memória automaticamente.
+* **Cronologia Real:** Ordena arquivos baseados na tag EXIF `DateTimeOriginal`, ignorando nomes de arquivo arbitrários (`DSC_001`, `IMG_999`).
 
-## ⚙️ Como executar o projeto
+#### 2. 👁️ Detecção de Borrão (Computer Vision)
+* Utiliza **OpenCV** e o operador **Laplaciano** para calcular a variância de bordas da imagem.
+* Gera um relatório automático apontando quais arquivos estão abaixo do limiar de nitidez definido pelo usuário.
 
-### Pré-requisitos
-Certifique-se de ter o [Python 3.10+](https://www.python.org/) instalado.
+#### 3. 💧 Smart Watermark (Marca D'água Dinâmica)
+* **Lógica de Proporção:** O logo ocupa sempre X% da largura da imagem, independente se a foto é **Retrato (Vertical)** ou **Paisagem (Horizontal)**.
+* **Controle de Opacidade:** Slider de 0-100% para marcas d'água sutis.
+* **Correção de Rotação:** Aplica a orientação EXIF antes do processamento para garantir que o logo fique no canto correto.
 
-### Instalação
+#### 4. 🛡️ Metadados e Persistência
+* **Injeção IPTC:** Grava *Copyright* e *Artist Name* diretamente nos metadados do arquivo final.
+* **Configurações Salvas:** O app lembra suas preferências (pastas, sensibilidade, textos) em um arquivo JSON local.
 
-1. Clone o repositório:
-   ```bash
-   git clone https://github.com/Albaninn/Suporte_Fotos.git
-   ```
+## 🛠️ Stack Tecnológico
 
-2. Crie um ambiente virtual (recomendado):
-   ```bash
-   python -m venv venv
-   # Windows:
-   venv\Scripts\activate
-   # Linux/Mac:
-   source venv/bin/activate
-   ```
+* **Linguagem:** Python 3.10+
+* **Interface (GUI):** CustomTkinter (Modern UI / Dark Mode)
+* **Processamento de Imagem:** Pillow (PIL) + ImageOps
+* **Visão Computacional:** OpenCV (`cv2`)
+* **Metadados:** PieExif
+* **Build:** Auto-Py-To-Exe (PyInstaller)
 
-3. Instale as dependências:
-   ```bash
-   pip install -r requirements.txt
-   ```
+## ⚙️ Instalação e Execução
 
-4. Execute a aplicação:
-   ```bash
-   python src/main.py
-   ```
+### Rodando o código fonte
+1.  Clone o repositório:
+    ```bash
+    git clone https://github.com/Albaninn/Suporte_Fotos.git
+    ```
+2.  Instale as dependências:
+    ```bash
+    pip install -r requirements.txt
+    ```
+3.  Execute:
+    ```bash
+    python src/main.py
+    ```
+
+### Gerando o Executável (.exe)
+Este projeto está configurado para ser compilado em um arquivo único portátil.
+1.  Instale o construtor: `pip install auto-py-to-exe`
+2.  Execute `auto-py-to-exe` e selecione o script `src/main.py`.
+3.  Certifique-se de incluir o ícone `camera.ico` como recurso adicional.
+
+### Caminho do Executável(.exe)
+Suporte_Fotos\output\PhotoFlow.exe
 
 ## 📂 Estrutura do Projeto
+
 ```text
-PhotoFlow_Organizer/
+PhotoFlow_Pro/
+├── output/
+│   ├── PhotoFlow.exe 
 ├── src/
-│   ├── backend.py       # Lógica de negócio (Leitura EXIF, Ordenação)
-│   ├── interface.py     # Camada de Apresentação (GUI)
-│   └── main.py          # Entry point
+│   ├── backend.py       # Lógica (OpenCV, Pillow, EXIF Sorting)
+│   ├── interface.py     # GUI (CustomTkinter, Tabs, Events)
+│   └── main.py          # Entry Point
+├── camera.ico           # Ícone do App
+├── user_config.json     # (Gerado automaticamente)
 ├── requirements.txt     # Dependências
 └── README.md            # Documentação
 ```
