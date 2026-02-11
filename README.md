@@ -85,10 +85,11 @@ PhotoFlow_Pro/
 ├── user_config.json     # (Auto-generated)
 ├── requirements.txt     # Dependencies
 └── README.md            # Documentation (English)
-
+```
 
 ## 🤝 Contribution
 
 Suggestions and pull requests are welcome. This project was developed to solve real-world pain points in sports and social photography workflows.
 
+---
 Developed by Luckas Serenato

@@ -3,6 +3,8 @@
 > **Suíte de ingestão, organização e tratamento em lote para fotógrafos.**
 > Unifica múltiplas câmeras, detecta fotos borradas via Visão Computacional e aplica branding inteligente.
 
+[![en](https://img.shields.io/badge/lang-en-red.svg)](README.md)
+
 ![Badge Python](https://img.shields.io/static/v1?label=PYTHON&message=3.10+&color=blue&style=for-the-badge)
 ![Badge CV](https://img.shields.io/static/v1?label=OPENCV&message=VISÃO%20COMPUTACIONAL&color=green&style=for-the-badge)
 ![Badge Status](https://img.shields.io/static/v1?label=STATUS&message=V1.0%20STABLE&color=success&style=for-the-badge)
